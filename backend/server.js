@@ -70,7 +70,7 @@ setTimeout(() => {
 	destroyRooms()
 },3000)
 
-if(process.env.JANUS_RELAY){
+if(process.env.JANUS_RELAY === "true"){
 	const janusRelay = require('./janus/janus-event-handler-relay')
 	janusRelay()
 }
