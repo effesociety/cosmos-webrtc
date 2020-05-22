@@ -1,0 +1,12 @@
+{
+	"name": "cosmos-webrtc",
+	"version": "0.0.1",
+	"description": "Cosmos-WebRTC",
+	"scripts": {
+		"start": "node backend/server.js",
+		"heroku-postbuild": "cd backend && npm install && cd ../frontend && npm install --only=dev && npm install && cp webpack.config.js ./node_modules/react-scripts/config/ && npm run build"
+	},
+	"engines": {
+		"node": "12.16.1"
+	}
+}
