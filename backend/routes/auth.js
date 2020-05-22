@@ -66,7 +66,6 @@ router.post(
         },
         (err, token) => {
           if (err) throw err;
-          //res.cookie('token', token, { domain: 'localhost', path:'/', maxAge: 24 * 60 * 60 * 1000, httpOnly: true })
           res.cookie('token', token, { httpOnly: true })
           res.status(200).json({
             message: "Success"
@@ -128,7 +127,6 @@ router.post(
         },
         (err, token) => {
           if (err) throw err;
-          //res.cookie('token', token, { domain: 'localhost', path:'/', maxAge: 24 * 60 * 60 * 1000, httpOnly: true })
           res.cookie('token', token, { httpOnly: true })
           res.status(200).json({
             message: "Success"

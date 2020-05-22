@@ -31,14 +31,14 @@ class App extends React.Component{
   }
 
   componentDidMount(){
-    console.log("Emitting identify")
+    console.debug("Emitting identify")
     socket.emit('identify')
     socket.on('identityChecked',this.handleIdentityChecked)
     socket.on('cosmosStatus',this.cosmosStatus)
   }
 
   handleIdentityChecked(username,role){
-    console.log("handleidentityChecked received")
+    console.debug("handleidentityChecked received")
     if(username){
       this.setState({
         status: 'logged',

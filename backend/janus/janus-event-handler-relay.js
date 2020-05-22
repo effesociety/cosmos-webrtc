@@ -16,10 +16,7 @@ const janusRelay = () => {
 
 	socket.on('janusEvent',(body) => {
 		console.log("[JANUS-EVENT-HANDLER-RELAY] Relay received a body of an event...Emitting event");
-
 		if(body.event && body.event.data){
-		  console.log("Well well")
-		  console.log(body.event.data.event)
 		  let data = body.event.data; //We suppose the plugin is 'janus.plugin.videoroom' because it's the only one we use (for now)
 		  commonEmitter.emit(data.event,data);
 		}	

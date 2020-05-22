@@ -50,17 +50,8 @@ module.exports = class JanusSession{
   longPollRequest(){
     console.log("Long poll request")
     axios.get(process.env.JANUS_HOSTNAME+this.sessionID+"?rid="+new Date().getTime()+"&maxev=9999&token="+process.env.JANUS_TOKEN)
-    /*.then(res => {
-  		res.data.forEach(event => {
-  			console.log(event)
-  			if(event.plugindata != undefined && (event.plugindata.data.leaving != undefined || event.plugindata.data.unpublished != undefined)){
-  				console.log("Someone left the room")
-  			}
-  		});
-  	})*/
   	.then(() => this.longPollRequest())
     .catch(err => {
-      console.log("ROOOOTTTO")
       console.log(err)
     })
   }
@@ -126,7 +117,6 @@ module.exports = class JanusSession{
       return res.data.plugindata.data.room
     })
 		.catch(err => {
-			console.log("[ERROR] Room NOT created")
 			console.log(err)
 		})
   }
@@ -145,8 +135,10 @@ module.exports = class JanusSession{
       token: process.env.JANUS_TOKEN
     })
     .then(res => {
-      //console.log(res.data)
       console.log("Destroyed room -",res.data.plugindata.data.room)
+    })
+    .catch(err =>{
+      console.log(err)
     })
   }
 
@@ -161,7 +153,6 @@ module.exports = class JanusSession{
       token: process.env.JANUS_TOKEN
     })
     .then(res => {
-      //console.log(res.data.plugindata.data.list)
       return res.data.plugindata.data.list
     })
     .catch(err => {

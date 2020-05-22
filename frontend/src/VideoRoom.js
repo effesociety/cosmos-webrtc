@@ -10,6 +10,8 @@ import VolumeUp from '@material-ui/icons/VolumeUp';
 import VolumeOff from '@material-ui/icons/VolumeOff';
 import IconButton from '@material-ui/core/IconButton';
 
+const maxNumUsers = 4;
+
 const styles = {
 	largeVideoContainer: {
 		position: "fixed",
@@ -106,14 +108,6 @@ const styles = {
 
 }
 
-var serverURI
-if(process.env.REACT_APP_JANUS){
-	serverURI = process.env.REACT_APP_JANUS
-}
-else{
-	serverURI = "wss://janus.conf.meetecho.com/ws" //Change this as you please in development
-}
-
 
 class VideoRoom extends React.Component{
 	constructor(props){
@@ -177,7 +171,6 @@ class VideoRoom extends React.Component{
 		//To close video call
 		this.handleClickClose = this.handleClickClose.bind(this)
 
-		//Fegatelli
 		this.configureAudio = this.configureAudio.bind(this)
 		this.configureVideo = this.configureVideo.bind(this)
 		this.configureRemoteAudio = this.configureRemoteAudio.bind(this)
@@ -199,8 +192,8 @@ class VideoRoom extends React.Component{
 
 	handleEnter(janusToken,room){
 		Janus.init({debug:'all',callback: () => {
-			console.log("I got a token")
-			console.log(janusToken)
+			console.debug("I got a token")
+			console.debug(janusToken)
 			if(!Janus.isWebrtcSupported()){
 				//Opening snackbar
 				this.setState({
@@ -219,7 +212,7 @@ class VideoRoom extends React.Component{
 	}
 
 	createSession(janusToken){	
-		console.log("Creating Janus session")
+		console.debug("Creating Janus session")
 		this.setState({
 			janus: new Janus({
 					server: this.state.server,
@@ -232,7 +225,7 @@ class VideoRoom extends React.Component{
 	}
 
 	pluginAttach(){
-		console.log("Executing plugin attach")
+		console.debug("Executing plugin attach")
 		this.state.janus.attach({
 				plugin: "janus.plugin.videoroom",
 				opaqueId: this.state.opaqueId,
@@ -254,7 +247,7 @@ class VideoRoom extends React.Component{
 
 	handleError(error){
 		//Janus.error(error)
-		console.log(error)
+		console.error(error)
 		//Opening snackbar
 		this.setState({
 			openSnackbar: true,
@@ -273,18 +266,11 @@ class VideoRoom extends React.Component{
 	}
 
 	handleSessionDestroyed(){
-		/*
-		this.setState({
-			activeCall: false
-		})
-		this.props.handleToggleScroll()
-		this.state.sfutest.hangup()
-		*/
 		window.location.reload();
 	}
 
 	handleAttachSuccess(pluginHandle){
-			//Mostro il player
+			//Show the player
 			this.setState({
 				sfutest: pluginHandle
 			})
@@ -297,7 +283,6 @@ class VideoRoom extends React.Component{
 
 	handleConsentDialog(on){
 		Janus.debug("Consent dialog should be " + (on ? "on" : "off") + " now");
-		//They darken the screen
 	}
 
 	handleMediaState(medium, on){
@@ -316,7 +301,6 @@ class VideoRoom extends React.Component{
 		else{
 			Janus.log("Capping bandwidth to " + this.state.bitrate + " via REMB");
 		}
-		//sfutest.send({message: {request: "configure, bitrate: bitrate}})
 		return false
 	}
 
@@ -355,7 +339,6 @@ class VideoRoom extends React.Component{
 				//The room has been destroyed
 				Janus.warn("The room ha been destroyed")
 				this.handleError("The room has been destroyed")
-				//TO-DO: remove video player or reload page
 			}
 			else if(event === 'event'){
 				//Any new feed to attach to?
@@ -377,7 +360,7 @@ class VideoRoom extends React.Component{
 					let leaving = msg["leaving"]
 					Janus.log("Publisher left: " + leaving)
 					let remoteFeed = null
-					for(let i=0; i<42; i++){
+					for(let i=0; i<maxNumUsers; i++){
 						if(this.state.feeds[i] !== null && this.state.feeds[i] !== undefined && this.state.feeds[i].rfid === leaving){
 							remoteFeed = this.state.feeds[i]
 							break
@@ -385,7 +368,6 @@ class VideoRoom extends React.Component{
 					}
 					if(remoteFeed !== null){
 						Janus.debug("Feed " + remoteFeed.rfid + " (" + remoteFeed.rfdisplay + ") has left the room, detaching")
-						//TO-DO appendere il suo div
 						this.setState(update(this.state,{
 							feeds: {
 								[remoteFeed.rfindex]: {
@@ -393,8 +375,6 @@ class VideoRoom extends React.Component{
 								}
 							}
 						}))
-						//Do not mutate state directly
-						//this.state.feeds[remoteFeed.rfindex] = null
 						remoteFeed.detach()
 					}
 				}
@@ -408,7 +388,7 @@ class VideoRoom extends React.Component{
 						return
 					}
 					var remoteFeed = null
-					for(let i=0; i<42; i++){
+					for(let i=0; i<maxNumUsers; i++){
 						if(this.state.feeds[i] !== null && this.state.feeds[i] !== undefined && this.state.feeds[i].rfid === unpublished){
 							remoteFeed = this.state.feeds[i]
 							break
@@ -416,7 +396,6 @@ class VideoRoom extends React.Component{
 					}
 					if(remoteFeed != null){
 						Janus.debug("Feed " + remoteFeed.rfid + " (" + remoteFeed.rfdisplay + ") has left the room, detaching")
-						//TO-DO appendere il suo div
 						this.setState(update(this.state,{
 							feeds: {
 								[remoteFeed.rfindex]: {
@@ -424,15 +403,13 @@ class VideoRoom extends React.Component{
 								}
 							}
 						}))
-						//Do not mutate state directly
-						//this.state.feeds[remoteFeed.rfindex] = null
 						remoteFeed.detach()
 					}
 				}
 				else if(msg["error"] !== undefined && msg["error"] !== null){
 					if(msg["error_code"] === 426){
 						//This is a "no such room" error
-						this.handleError("There has been an error")//TO-DO: give a better description
+						this.handleError("There has been an error")
 					}
 					else{
 						this.handleError(msg["error"])
@@ -456,7 +433,6 @@ class VideoRoom extends React.Component{
 			if(this.state.mystream && this.state.mystream.getVideoTracks() && this.state.mystream.getVideoTracks().length > 0 && !video)
 			//Video has been rejected
 			this.handleWarning("Our video stream has been rejected, viewers won't see us")
-			//TO-DO: hide my on video camera
 		}
 	}
 
@@ -468,18 +444,12 @@ class VideoRoom extends React.Component{
 		})
 		this.props.handleToggleScroll()
 		Janus.debug(stream)
-		//TO-DO: Binding tra il div e lo stream
-		//Usare la funzione Janus.attachMediaStream (e.g. Janus.attachMediaStream($('#myvideo').get(0),stream))
 		Janus.attachMediaStream(document.getElementById('myvideo'),stream)
-		//fare anche il binding co tutti i belli bottoncini eccetera
 
-		if(this.state.sfutest.webrtcStuff.pc.iceConnectionState !== "completed" && this.state.sfutest.webrtcStuff.pc.iceConnectionState !== "connected"){
-					//TO-DO: mostrare la scritta "Publishing"
-		}
 		var videoTracks = stream.getVideoTracks()
 		if(videoTracks === null || videoTracks === undefined || videoTracks.length === 0){
 			//No webcam
-			//TO-DO: Non mostrare il mio riguadro perchè non ho la webcam
+			//TO-DO: Don't show my block because I don't have a webcam
 		}
 	}
 
@@ -524,7 +494,7 @@ class VideoRoom extends React.Component{
 
 	handleCreateOfferError(error){
 		Janus.error("WebRTC error:", error)
-		console.log(error)
+		console.error(error)
 		if(this.state.useAudio){
 			this.publishOwnFeed(false)
 		}
@@ -631,9 +601,9 @@ class VideoRoom extends React.Component{
 				}
 				else if(event !== undefined && event !== null){
 					if(event === "attached"){
-						console.log(" ::: SUBSCRIBER CREATED AND ATTACHED :::")
+						console.debug(" ::: SUBSCRIBER CREATED AND ATTACHED :::")
 						//Subscriber created and attached
-						for(let i=0; i<42; i++){
+						for(let i=0; i<maxNumUsers; i++){
 							if(this.state.feeds[i] === undefined || this.state.feeds[i] === null){
 								this.setState(update(this.state,{
 									feeds: {
@@ -651,7 +621,7 @@ class VideoRoom extends React.Component{
 						Janus.log("Successfully attached to feed " + remoteFeed.rfid + "(" + remoteFeed.rfdisplay + ") in room " + msg["room"])
 					}
 					else{
-						console.log(event)
+						console.debug(event)
 						//What has just happened?
 					}
 				}
@@ -683,12 +653,9 @@ class VideoRoom extends React.Component{
 				//The subscriber stream is recvonly, we don't expect anything here
 			},
 			onremotestream: stream => {
-				console.log("****************PRINTING ONREMOTESTREAM NEW REMOTE FEED***************************")
+				console.debug("****************PRINTING ONREMOTESTREAM NEW REMOTE FEED***************************")
 				Janus.debug("Remote feed # " +  remoteFeed.rfindex)
-				//TO-DO: mostrare il video nel riquadro
-				//effettuare l'attach in un <div> --> Janus.attachMediaStream(div,stream)
 				Janus.attachMediaStream(document.getElementById('remote-'+remoteFeed.rfindex),stream)
-				//document.getElementById('remote-'+remoteFeed.rfindex).srcObject = stream
 			},
 			oncleanup: () => {
 				Janus.log("::: Got a cleanup notification (remote feed " + id + ") :::")
@@ -696,7 +663,6 @@ class VideoRoom extends React.Component{
 					remoteFeed.spinner.stop()
 				}
 				remoteFeed.spinner = null
-				//TO-DO: rimuovere il riquadro del remote feed
 				if(this.state.bitrateTimer[remoteFeed.rfindex] !== null && this.state.bitrateTimer[remoteFeed.rfindex] !== null){
 					clearInterval(this.state.bitrateTimer[remoteFeed.rfindex])
 				}

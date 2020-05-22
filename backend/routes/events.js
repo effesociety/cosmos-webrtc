@@ -9,8 +9,7 @@ const Helpers = require('../utils/helpers')
 const commonEmitter =  Helpers.commonEmitter;
 
 eventsRouter.post("", (req,res) => {
-  console.log("Emitting event")
-  console.log(req.body)
+  console.log("[EVENTS] Emitting event")
   if(req.body.event && req.body.event.data){
     let data = req.body.event.data; //We suppose the plugin is 'janus.plugin.videoroom' because it's the only one we use
     commonEmitter.emit(data.event,data);

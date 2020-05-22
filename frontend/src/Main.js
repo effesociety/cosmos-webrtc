@@ -49,15 +49,15 @@ class Main extends React.Component{
   }
 
   handleEnter(janusToken){
-    console.log("*****Received 'enter' message from backend***********")
+    console.debug("Received 'enter' message from backend")
     this.setState({
       janusToken: janusToken
     })
   }
 
   handleQueueStatus(queueStatus) {
-    console.log("*****EXECUTING handleQueueStatus************")
-    console.log("[DEBUG] Got queueStatus: ",queueStatus)
+    console.debug("Executing handleQueueStatus")
+    console.debug("Got queueStatus: ",queueStatus)
     this.setState({
       queueStatus: queueStatus
     })
@@ -65,8 +65,8 @@ class Main extends React.Component{
 
   //Define what happens when the Queue number changes
   handleUpdateQueue(queueNumber){
-    console.log("*****EXECUTING updateQueue handler************")
-    console.log("[DEBUG] Received 'updateQueue' message with reservation position: ",queueNumber)
+    console.debug("Executing updateQueue handler")
+    console.debug("Received 'updateQueue' message with reservation position: ",queueNumber)
     this.setState({
       queueNumber: queueNumber
     })
@@ -74,8 +74,8 @@ class Main extends React.Component{
 
   //Define what happens when the 'enqueue' is completed
   handleEnqueueCompleted(queueNumber){
-    console.log("*****EXECUTING enqueueCompleted handler************")
-    console.log("[DEBUG] Received 'enqueueCompleted' message with reservation position: ",queueNumber)
+    console.debug("Executing enqueueCompleted handler")
+    console.debug("Received 'enqueueCompleted' message with reservation position: ",queueNumber)
     this.setState({
       queueNumber: queueNumber
     })
@@ -84,43 +84,42 @@ class Main extends React.Component{
   enqueue(){
 		const friend = this.helloFriend.current.value;
 		if(friend.length>0){
-			console.log("There is a friend: ",friend)
+			console.debug("There is a friend: ",friend)
 			this.props.socket.emit('enqueue',friend)			
     }
 		else{
-			console.log("I feel so lonely")
+			console.debug("I feel so lonely")
 			this.props.socket.emit('enqueue')
 		}
 		
-		console.log("'enqueue' emitted")
+		console.debug("Enqueue emitted")
   }
 
   hostRoom(){
     const username = this.props.username || ""
     const role = this.props.role || ""
     this.props.socket.emit('createRoom',username,role)
-    console.log("'createRoom' emitted")
+    console.debug("CreateRoom emitted")
   }
   
   enableCosmos(){
-	this.props.socket.emit('changeCosmosStatus','enable')
-	console.log("changeCosmosStatus with enable payload emitted")  
+	  this.props.socket.emit('changeCosmosStatus','enable')
+	  console.debug("changeCosmosStatus with enable payload emitted")  
   }
   
   disableCosmos(){
-	this.props.socket.emit('changeCosmosStatus','disable')
-	console.log("changeCosmosStatus with disable payload emitted")  	
+	  this.props.socket.emit('changeCosmosStatus','disable')
+	  console.debug("changeCosmosStatus with disable payload emitted")  	
   }
 
 
 
   render(){
     var queueTxt;
-    var janusToken = this.state.janusToken ? this.state.janusToken : ""
 
     //if not logged
     if(this.props.status === 'anonymous'){
-      console.log("[DEBUG] Status not logged")
+      console.debug("Status not logged")
       queueTxt = (
         <Box style={styles.queueBox}>
           <Box>
@@ -228,8 +227,8 @@ class Main extends React.Component{
 
     //if logged and queueNumber is set (user enqueued)
     else if(this.props.status === 'logged' && this.state.queueNumber !== undefined && this.props.cosmos === 'enabled'){
-      console.log("[DEBUG] Status logged")
-      console.log("[DEBUG] 'queueNumber is set'")
+      console.debug("Status logged")
+      console.debug("queueNumber is set")
       //This code is just to deal with singular/plurals
       var queueLenTxt
       //Just to show a more friendly message before the Janus connection is made
@@ -272,7 +271,7 @@ class Main extends React.Component{
 
     //if logged, queueNumber is not set (user not enqueued) and the queue is empty
     else if(this.props.status === 'logged' && this.state.queueNumber === undefined && this.state.queueStatus === 'empty' && this.props.cosmos === 'enabled'){
-      console.log("[DEBUG] Logged and 'queueNumber' not set")
+      console.debug("Logged and 'queueNumber' not set")
       queueTxt = (
         <Box style={styles.queueBox}>
           <Box align="center">

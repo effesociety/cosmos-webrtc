@@ -17,9 +17,7 @@ const destroyRooms = Helpers.destroyRooms;
 
 dotenv.config()
 
-
 console.log("NODE_ENV: ", process.env.NODE_ENV)
-
 const server = app.listen(process.env.PORT,()=>{
 	console.log("App running on port ", process.env.PORT)
 });
@@ -60,7 +58,7 @@ const JanusAdminAPI = require('./janus/janus-admin-api');
 var janusAdmin = new JanusAdminAPI();
 janusAdmin.addToken(process.env.JANUS_TOKEN)
 const JanusAPI = require('./janus/janus-api');
-var janusSession = new JanusAPI()//create Janus session
+var janusSession = new JanusAPI()//create instance for Janus Session
 const janus =  Helpers.commonEmitter;
 /************************************
 *					QUEUE SETUP
@@ -186,7 +184,7 @@ io.on('connection',(socket) => {
 					var tokenJanus = Math.random().toString(36).substring(2) //generate random Token
 					janusAdmin.addToken(tokenJanus)
 
-					console.log("[DEBUG] Enqueue completed, sending reservation position: ",queue.length)
+					console.log("Enqueue completed, sending reservation position: ",queue.length)
 					socket.emit('enqueueCompleted',queue.length)
 					
 					if(friend){
@@ -244,7 +242,7 @@ io.on('connection',(socket) => {
 								}
 							}
 							
-							console.log("[DEBUG] User enter in room-",room)
+							console.log("User may enter in room-",room)
 						}
 					})
 				}
@@ -278,7 +276,7 @@ io.on('connection',(socket) => {
 				}
 			}
 		})
-  })
+ 	})
 
 	socket.on('joined', (id) => {
 		//a user entered, we have to find him in the queue,
@@ -329,21 +327,17 @@ io.on('connection',(socket) => {
 })
 
 janus.on('joined', data => {
-  console.log("************EVENT JOINED**************")
-  console.log(data)
+ 	console.log("************EVENT JOINED**************")
+	console.log(data)
 
 	activeUsers[data.id] = {
 		"room": data.room
 	}
-
-	//setTimeout of 5 seconds and if only room is set
-	//deactivate all tokens that are not matched with activeUsers
-	//kick from room and remove from activeUsers
 })
 
 janus.on('leaving', data => {
-  console.log("************EVENT LEAVING**************")
-  console.log(data)
+  	console.log("************EVENT LEAVING**************")
+  	console.log(data)
 	janusSession.listParticipants(data.room)
 	.then(participants => {
 		var active = participants.length
@@ -382,5 +376,3 @@ janus.on('leaving', data => {
 		}
 	})
 })
-
-/********************************************************************/

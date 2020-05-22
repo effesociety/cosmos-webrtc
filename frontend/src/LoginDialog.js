@@ -90,8 +90,6 @@ class LoginDialog extends React.Component{
   handleLogin(){
     const username = this.usernameTextField.current.value;
     const password = this.passwordTextField.current.value;
-    console.log(username)
-    console.log(password)
     const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -101,10 +99,9 @@ class LoginDialog extends React.Component{
     fetch('/user/login', requestOptions)
     .then(response => {
       if(response.status===200){
-        console.log("Executing this.props.onStatusChange")
+        console.debug("Executing changeStatus")
         this.props.changeStatus('logged',username)
         this.handleCloseDialog()
-        //window.location.reload()
       }else{
         this.handleErrorMsg("Something is wrong!")
       }
@@ -123,10 +120,9 @@ class LoginDialog extends React.Component{
     fetch('/user/signup', requestOptions)
     .then(response => {
       if(response.status === 200){
-        console.log("Executing this.props.onStatusChange")
+        console.debug("Executing changeStatus")
         this.props.changeStatus('logged',username)
         this.handleCloseDialog()
-        //window.location.reload()
       }else{
         this.handleErrorMsg("Something is wrong!")
       }

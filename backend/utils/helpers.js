@@ -14,14 +14,14 @@ async function checkUser(cookies,socket){
   var token = cookies.token
   if(token){
     try{
-      var decoded = jwt.verify(token,process.env.JWT_SECRET)
-			var username = decoded.user.username
-      var user = await schema.findOne({username})
-      return user
+		var decoded = jwt.verify(token,process.env.JWT_SECRET)
+		var username = decoded.user.username
+		var user = await schema.findOne({username})
+		return user
     }
     catch(err){
-      console.log(err)
-      socket.emit('identityChecked',undefined)
+		console.log(err)
+		socket.emit('identityChecked',undefined)
     }
   }
 	else{
@@ -54,7 +54,6 @@ async function checkFreeRoom(janusSession){
 
 function nextUserEnter(queue,connecting,io,room){
 	console.log("The next user may enter, sending 'enter' message...")
-	
 	//check if queue[0] is/are connected
 	var clientConnected = false
 	while(!clientConnected){
@@ -73,7 +72,6 @@ function nextUserEnter(queue,connecting,io,room){
 			return
 		}
 	}
-	
 	if(queue.length>0){		
 		queue[0].forEach(user =>{
 			io.to(user.socket.id).emit('enter',user.token,room)
@@ -84,10 +82,8 @@ function nextUserEnter(queue,connecting,io,room){
 				socket: user.socket
 			}
 		})
-		
 		//Now I can remove this element from the queue
 		queue.splice(0,1)
-		
 		//Send updates to every other user in the queue
 		queue.forEach((queueElement,index) => {
 			queueElement.forEach(user => {
@@ -106,7 +102,6 @@ function destroyRooms(janusSession){
 		})
 	})
 }
-
 
 
 const EventEmitter = require('events');
