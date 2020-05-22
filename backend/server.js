@@ -1,15 +1,20 @@
 const express = require('express')
 const app = express();
-const http = require('http');
-const bodyParser = require('body-parser');
-const axios = require('axios');
 const mongoServer = require('./utils/db');
-const jwt = require("jsonwebtoken");
 const auth = require("./routes/auth");
-const schema = require("./model/schema");
 const cookie = require('cookie')
 const path = require('path')
 const dotenv = require('dotenv')
+const Helpers = require('./utils/helpers')
+
+//Importing functions
+const getSocket = Helpers.getSocket;
+const checkUser = Helpers.checkUser;
+const checkReservation = Helpers.checkReservation;
+const checkFreeRoom = Helpers.checkFreeRoom;
+const nextUserEnter = Helpers.nextUserEnter;
+const destroyRooms = Helpers.destroyRooms;
+
 dotenv.config()
 
 
@@ -55,8 +60,7 @@ const JanusAdminAPI = require('./janus/janus-admin-api');
 var janusAdmin = new JanusAdminAPI();
 janusAdmin.addToken(process.env.JANUS_TOKEN)
 const JanusAPI = require('./janus/janus-api');
-var janusSession = new JanusAPI();//create Janus session
-const Helpers = require('./utils/helpers')
+var janusSession = new JanusAPI()//create Janus session
 const janus =  Helpers.commonEmitter;
 /************************************
 *					QUEUE SETUP
@@ -65,10 +69,6 @@ var queue = []
 var activeUsers = {}
 var connecting = {}
 var cosmosStatus = "disabled"
-
-setTimeout(() => {
-	destroyRooms()
-},3000)
 
 if(process.env.JANUS_RELAY === "true"){
 	const janusRelay = require('./janus/janus-event-handler-relay')
@@ -85,12 +85,12 @@ io.on('connection',(socket) => {
 
 	socket.on('map', () => {
 		console.log("Received map")
-    const cookies = cookie.parse(socket.request.headers.cookie || '')
+    	const cookies = cookie.parse(socket.request.headers.cookie || '')
 		checkUser(cookies,socket).then(user =>{
 			if(user){			
 				socket.emit('cosmosStatus',cosmosStatus)
 				if(cosmosStatus === 'enabled'){
-					checkFreeRoom()
+					checkFreeRoom(janusSession)
 					.then(room => {
 						if(!room){
 							socket.emit('queueStatus','occupied')
@@ -101,7 +101,7 @@ io.on('connection',(socket) => {
 					})
 				}
 				socket.username = user.username
-				checkReservation(socket.username,socket.id)
+				checkReservation(queue,io,socket.username,socket.id)
 				socket.emit('identityChecked',socket.username, user.role)
 			}
 		})
@@ -114,7 +114,7 @@ io.on('connection',(socket) => {
 			if(user){
 				socket.emit('cosmosStatus',cosmosStatus)
 				if(cosmosStatus === 'enabled'){
-					checkFreeRoom()
+					checkFreeRoom(janusSession)
 					.then(room => {
 						if(!room){
 							socket.emit('queueStatus','occupied')
@@ -127,7 +127,7 @@ io.on('connection',(socket) => {
 				socket.username = user.username
 				socket.emit('identityChecked',socket.username, user.role)
 				console.log("identityChecked emitted")
-				checkReservation(socket.username, socket.id)
+				checkReservation(queue,io,socket.username, socket.id)
 			}
 			else {
 				console.log("User not identified")
@@ -152,16 +152,21 @@ io.on('connection',(socket) => {
 
 						//Janus setup on Cosmos enable
 						janusAdmin.addToken(process.env.JANUS_TOKEN)
-						janusSession = new JanusAPI();//create Janus session
+						janusSession.init()
+						.then(() =>{
+							destroyRooms(janusSession)
+						})
+						
 					}
 					else if(cmd === 'disable' && cosmosStatus === 'enabled'){
 						console.log("Emitted cosmosStatusChanged [DISABLE]")
 						io.emit('cosmosStatus','disabled')
 						cosmosStatus = "disabled"
-						destroyRooms()
+						destroyRooms(janusSession)
 						queue = []
 						activeUsers = {}
 						connecting = {}
+						janusSession.destroySession()
 					}
 				}
 			}
@@ -186,13 +191,13 @@ io.on('connection',(socket) => {
 					
 					if(friend){
 						console.log("There is a friend with him!")
-						friendlySocket = getSocket(friend)
+						friendlySocket = getSocket(io,friend)
 						console.log("Printing socketID:", friendlySocket.id)
 						friendlyToken = Math.random().toString(36).substring(2) //generate random Token
 						janusAdmin.addToken(friendlyToken)
 					}
 
-					checkFreeRoom()
+					checkFreeRoom(janusSession)
 					.then(room => {
 						if(!room){
 							if(!friend){
@@ -262,7 +267,7 @@ io.on('connection',(socket) => {
 							socket: socket
 						}
 						if(queue.length > 0){
-							nextUserEnter(room)
+							nextUserEnter(queue,connecting,io,room)
 						}
 						else{
 							io.emit('queueStatus','empty')
@@ -297,7 +302,7 @@ io.on('connection',(socket) => {
 				
 				delete connecting[user.username]
 				
-				checkFreeRoom()
+				checkFreeRoom(janusSession)
 				.then(room =>{
 					if(!room){
 						io.emit('queueStatus','occupied')
@@ -362,7 +367,7 @@ janus.on('leaving', data => {
 				janusAdmin.removeToken(expiredToken)
 				delete activeUsers[data.id]
 				if(queue.length>0){
-					nextUserEnter(data.room)
+					nextUserEnter(queue,connecting,io,data.room)
 				}
 				else{
 					io.emit('queueStatus','empty')
@@ -377,109 +382,3 @@ janus.on('leaving', data => {
 })
 
 /********************************************************************/
-
-function getSocket(username){
-	var sockets = io.sockets.sockets;
-	for(var socketId in sockets) {
-		if(sockets[socketId].username === username){
-			return sockets[socketId]
-		}			
-	}
-}
-
-async function checkUser(cookies,socket){
-  var token = cookies.token
-  if(token){
-    try{
-      var decoded = jwt.verify(token,process.env.JWT_SECRET)
-			var username = decoded.user.username
-      var user = await schema.findOne({username})
-      return user
-    }
-    catch(err){
-      console.log(err)
-      socket.emit('identityChecked',undefined)
-    }
-  }
-	else{
-		socket.emit('identityChecked',undefined)
-	}
-}
-
-//Check if a user has a reservation in the queue
-function checkReservation(username,socketID){
-  queue.forEach((queueElement,index)=> {
-    queueElement.forEach(user => {
-      if(user.username == username){
-        console.log("User had a reservation number:",index)
-        io.to(socketID).emit('updateQueue',index)
-      }
-    })
-  })
-}
-
-async function checkFreeRoom(){
-  const list = await janusSession.listRooms()
-  for (const element of list){
-    var participants = await janusSession.listParticipants(element.room)
-    console.log("participants:",participants)
-      if(participants.length === 1){
-          return element.room
-      }
-  }
-}
-
-function nextUserEnter(room){
-	console.log("The next user may enter, sending 'enter' message...")
-	
-	//check if queue[0] is/are connected
-	var clientConnected = false
-	while(!clientConnected){
-		if(queue[0]){
-			queue[0].forEach(user =>{
-				if(user.socket !== null){
-					clientConnected = true
-				}
-			})
-			
-			if(!clientConnected){
-				queue.splice(0,1)
-			}
-		}
-		else{
-			return
-		}
-	}
-	
-	if(queue.length>0){		
-		queue[0].forEach(user =>{
-			io.to(user.socket.id).emit('enter',user.token,room)
-			//Saving user in 'connecting' data structure
-			connecting[user.username] = {
-				room: room,
-				token: user.token,
-				socket: user.socket
-			}
-		})
-		
-		//Now I can remove this element from the queue
-		queue.splice(0,1)
-		
-		//Send updates to every other user in the queue
-		queue.forEach((queueElement,index) => {
-			queueElement.forEach(user => {
-				console.log("Sending 'updateQueue' to the users with position: ",index)
-				io.to(user.socket.id).emit('updateQueue',index)
-			})
-		})
-	}
-}
-
-function destroyRooms(){
-	janusSession.listRooms()
-	.then(list =>{
-		list.forEach(element => {
-			janusSession.destroyRoom(element.room);
-		})
-	})
-}

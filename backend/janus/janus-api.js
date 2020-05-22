@@ -7,12 +7,15 @@ module.exports = class JanusSession{
     this.sessionID = null;
     this.pluginID = null;
     this.rooms = null;
-    this.createSession();
+  }
+
+  async init(){
+    return await this.createSession()
   }
 
   //Create a Janus Session and issue endless Long Poll request loop
   createSession(){
-    axios.post(process.env.JANUS_HOSTNAME, {
+    return axios.post(process.env.JANUS_HOSTNAME, {
       janus: 'create',
       transaction: Math.random().toString(36).substring(2),
       token: process.env.JANUS_TOKEN
@@ -25,10 +28,21 @@ module.exports = class JanusSession{
     .then(() =>{
       console.log("Got SessionID:" + this.sessionID)
       this.longPollRequest()
-      this.attachToPlugin()
+      return this.attachToPlugin()
     })
     .catch(error => {
       console.error(error)
+    })
+  }
+
+  destroySession(){
+    return axios.post(process.env.JANUS_HOSTNAME+this.sessionID,{
+      janus: "destroy",
+      transaction: Math.random().toString(36).substring(2),
+      token: process.env.JANUS_TOKEN
+    })
+    .catch(error => {
+      console.log(error)
     })
   }
 
@@ -46,13 +60,14 @@ module.exports = class JanusSession{
   	})*/
   	.then(() => this.longPollRequest())
     .catch(err => {
+      console.log("ROOOOTTTO")
       console.log(err)
     })
   }
   //Attach to VideoRoom Plugin
   attachToPlugin(){
     console.log("Attaching to VideoRoom plugin")
-    axios.post(process.env.JANUS_HOSTNAME+this.sessionID,{
+    return axios.post(process.env.JANUS_HOSTNAME+this.sessionID,{
       janus:"attach",
       transaction: Math.random().toString(36).substring(2),
       plugin:"janus.plugin.videoroom",
@@ -63,6 +78,7 @@ module.exports = class JanusSession{
       console.log("Result from Janus plugin attaching request")
       console.log(res.data)
       this.pluginID = res.data.data.id;
+      return;
     })
     .catch(err => {
       console.log(err)
@@ -147,6 +163,9 @@ module.exports = class JanusSession{
     .then(res => {
       //console.log(res.data.plugindata.data.list)
       return res.data.plugindata.data.list
+    })
+    .catch(err => {
+      return []
     })
   }
 }

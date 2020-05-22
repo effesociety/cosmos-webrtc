@@ -5,7 +5,7 @@ const eventsRouter = express.Router()
 eventsRouter.use(bodyParser.json())
 eventsRouter.use(bodyParser.urlencoded({extended:false}))
 
-const Helpers = require('./utils/helpers')
+const Helpers = require('../utils/helpers')
 const commonEmitter =  Helpers.commonEmitter;
 
 eventsRouter.post("", (req,res) => {
