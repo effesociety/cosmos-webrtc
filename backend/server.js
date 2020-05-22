@@ -192,9 +192,11 @@ io.on('connection',(socket) => {
 					if(friend){
 						console.log("There is a friend with him!")
 						friendlySocket = getSocket(io,friend)
-						console.log("Printing socketID:", friendlySocket.id)
-						friendlyToken = Math.random().toString(36).substring(2) //generate random Token
-						janusAdmin.addToken(friendlyToken)
+						if(friendlySocket){
+							console.log("Printing socketID:", friendlySocket.id)
+							friendlyToken = Math.random().toString(36).substring(2) //generate random Token
+							janusAdmin.addToken(friendlyToken)
+						}
 					}
 
 					checkFreeRoom(janusSession)

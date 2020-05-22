@@ -70,7 +70,7 @@ class App extends React.Component{
   }
 
   cosmosStatus(cosmos){
-	console.debug("Received 'cosmosStatus'")
+  	console.debug("Received 'cosmosStatus'")
   	this.setState({
   	  cosmos: cosmos
   	})
@@ -97,7 +97,7 @@ class App extends React.Component{
       <div style={styles.root}>
         <FullBackdrop backdrop={this.state.backdrop}/>
         <VideoRoom username={this.state.username} socket={socket} handleToggleScroll={this.toggleScroll}/>
-        <Header status={this.state.status} username={this.state.username} liftStatusChange={this.changeStatus}/>
+        <Header status={this.state.status} username={this.state.username} changeStatus={this.changeStatus}/>
         <Main status={this.state.status} socket={socket} role={this.state.role} cosmos={this.state.cosmos}/>
         <Info />
         <Footer />

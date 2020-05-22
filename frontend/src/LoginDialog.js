@@ -57,17 +57,12 @@ class LoginDialog extends React.Component{
     this.handleCloseDialog = this.handleCloseDialog.bind(this)
     this.handleOpenDialog = this.handleOpenDialog.bind(this)
     this.handleErrorMsg = this.handleErrorMsg.bind(this)
-    this.handleStatusChange = this.handleStatusChange.bind(this)
     this.usernameTextField = React.createRef()
     this.passwordTextField = React.createRef()
     this.state = {
       open: false,
       errorMsg: ""
     }
-  }
-
-  handleStatusChange(){
-    this.props.onStatusChange()
   }
 
   handleOpenDialog(){
@@ -107,7 +102,7 @@ class LoginDialog extends React.Component{
     .then(response => {
       if(response.status===200){
         console.log("Executing this.props.onStatusChange")
-        this.props.onStatusChange('logged',username)
+        this.props.changeStatus('logged',username)
         this.handleCloseDialog()
         //window.location.reload()
       }else{
@@ -129,7 +124,7 @@ class LoginDialog extends React.Component{
     .then(response => {
       if(response.status === 200){
         console.log("Executing this.props.onStatusChange")
-        this.props.onStatusChange('logged',username)
+        this.props.changeStatus('logged',username)
         this.handleCloseDialog()
         //window.location.reload()
       }else{
@@ -147,7 +142,7 @@ class LoginDialog extends React.Component{
     fetch('/user/logout', requestOptions)
     .then(response => {
       if(response.status === 200){
-        this.props.onStatusChange('logged','anonymous');
+        this.props.changeStatus('anonymous',null);
       }
     })
   }

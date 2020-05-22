@@ -23,11 +23,6 @@ const styles = {
 class Header extends React.Component{
   constructor(props){
     super(props)
-    this.onStatusChange = this.onStatusChange.bind(this)
-  }
-
-  onStatusChange(status, username){
-    this.props.liftStatusChange(status, username)
   }
 
   render(){
@@ -35,7 +30,7 @@ class Header extends React.Component{
       <header style={styles.header}>
         <CssBaseline/>
         <Container>
-          <LoginDialog status={this.props.status} username={this.props.username} onStatusChange={this.onStatusChange}/>
+          <LoginDialog status={this.props.status} username={this.props.username} changeStatus={this.props.changeStatus}/>
         </Container>
         <Container style={styles.container}>
           <Grid container spacing={3}>
