@@ -1,9 +1,8 @@
-const axios = require('axios');
+const axios = require('axios')
 
 module.exports = class JanusAdminSession{
 
-  addToken(token, callback){
-    console.log("ADMIN: add token")
+  addToken(token){
     axios.post(process.env.JANUS_ADMIN_HOSTNAME,{
       janus: "add_token",
       token: token,
@@ -21,7 +20,6 @@ module.exports = class JanusAdminSession{
   }
 
   removeToken(token){
-    console.log("ADMIN: remove token")
     axios.post(process.env.JANUS_ADMIN_HOSTNAME,{
       janus: "remove_token",
       token: token,
@@ -39,7 +37,6 @@ module.exports = class JanusAdminSession{
   }
 
   listTokens(){
-    console.log("ADMIN: get list tokens")
     axios.post(process.env.JANUS_ADMIN_HOSTNAME,{
       janus: "list_tokens",
       transaction: Math.random().toString(36).substring(2),
